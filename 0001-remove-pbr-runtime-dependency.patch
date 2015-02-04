@@ -1,0 +1,30 @@
+From cd7239448389a2b1b5a87b296653b84335c6fbd7 Mon Sep 17 00:00:00 2001
+From: Jeff Peeler <jpeeler@redhat.com>
+Date: Mon, 14 Oct 2013 14:30:34 -0400
+Subject: [PATCH] remove pbr runtime dependency
+
+---
+ heat/version.py | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/heat/version.py b/heat/version.py
+index a8cd2d7..5383da8 100644
+--- a/heat/version.py
++++ b/heat/version.py
+@@ -12,6 +12,14 @@
+ #    under the License.
+ 
+ 
+-import pbr.version
++class VersionInfo(object):
++    release = 'REDHATHEATRELEASE'
++    version = 'REDHATHEATVERSION'
+ 
+-version_info = pbr.version.VersionInfo('heat')
++    def version_string(self):
++        return self.version
++
++    def release_string(self):
++        return self.release
++
++version_info = VersionInfo()

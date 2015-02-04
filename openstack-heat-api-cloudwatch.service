@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenStack Heat CloudWatch API Service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=heat
+ExecStart=/usr/bin/heat-api-cloudwatch
+
+[Install]
+WantedBy=multi-user.target

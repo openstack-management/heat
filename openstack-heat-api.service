@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenStack Heat API Service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=heat
+ExecStart=/usr/bin/heat-api
+
+[Install]
+WantedBy=multi-user.target
