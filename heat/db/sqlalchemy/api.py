@@ -507,6 +507,30 @@ def stack_get_root_id(context, stack_id):
     return s.id
 
 
+def stack_count_total_resources(context, stack_id):
+
+    # start with a stack_get to confirm the context can access the stack
+    if stack_id is None or stack_get(context, stack_id) is None:
+        return 0
+
+    stack_ids = []
+
+    def nested_stacks(sid):
+        stack_ids.append(sid)
+        for stack in stack_get_all_by_owner_id(context, sid):
+            nested_stacks(stack.id)
+
+    nested_stacks(stack_id)
+
+    # count all resources which belong to the stacks
+    results = model_query(
+        context, models.Resource
+    ).filter(
+        models.Resource.stack_id.in_(stack_ids)
+    ).count()
+    return results
+
+
 def user_creds_create(context):
     values = context.to_dict()
     user_creds_ref = models.UserCreds()
