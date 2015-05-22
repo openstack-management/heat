@@ -170,39 +170,20 @@ class StackTest(common.HeatTestCase):
     def test_total_resources_empty(self):
         self.stack = stack.Stack(self.ctx, 'test_stack', self.tmpl,
                                  status_reason='flimflam')
-        self.assertEqual(0, self.stack.total_resources())
 
-    def test_total_resources_generic(self):
+        self.assertEqual(0, self.stack.total_resources('1234'))
+
+    @mock.patch.object(stack.Stack, 'total_resources')
+    def test_total_resources_generic(self, ctr):
         tpl = {'HeatTemplateFormatVersion': '2012-12-12',
                'Resources':
                {'A': {'Type': 'GenericResourceType'}}}
         self.stack = stack.Stack(self.ctx, 'test_stack',
                                  template.Template(tpl),
                                  status_reason='blarg')
-        self.assertEqual(1, self.stack.total_resources())
-
-    def test_total_resources_nested_ok(self):
-        tpl = {'HeatTemplateFormatVersion': '2012-12-12',
-               'Resources':
-               {'A': {'Type': 'GenericResourceType'}}}
-        self.stack = stack.Stack(self.ctx, 'test_stack',
-                                 template.Template(tpl),
-                                 status_reason='blarg')
-
-        self.stack['A'].nested = mock.Mock()
-        self.stack['A'].nested.return_value.total_resources.return_value = 3
-        self.assertEqual(4, self.stack.total_resources())
-
-    def test_total_resources_nested_not_found(self):
-        tpl = {'HeatTemplateFormatVersion': '2012-12-12',
-               'Resources':
-               {'A': {'Type': 'GenericResourceType'}}}
-        self.stack = stack.Stack(self.ctx, 'test_stack',
-                                 template.Template(tpl),
-                                 status_reason='blarg')
-
-        self.stack['A'].nested = mock.Mock(
-            side_effect=exception.NotFound('gone'))
+        self.stack.id = '1234'
+        ctr.return_value = 1
+        self.assertEqual(1, self.stack.total_resources(self.stack.id))
         self.assertEqual(1, self.stack.total_resources())
 
     def test_iter_resources(self):
@@ -230,42 +211,6 @@ class StackTest(common.HeatTestCase):
         self.assertEqual(2, len(first_level_resources))
         all_resources = list(self.stack.iter_resources(1))
         self.assertEqual(5, len(all_resources))
-
-    def test_root_stack_no_parent(self):
-        tpl = {'HeatTemplateFormatVersion': '2012-12-12',
-               'Resources':
-               {'A': {'Type': 'GenericResourceType'}}}
-        self.stack = stack.Stack(self.ctx, 'test_stack',
-                                 template.Template(tpl),
-                                 status_reason='blarg')
-
-        self.assertEqual(self.stack, self.stack.root_stack)
-
-    def test_root_stack_parent_no_stack(self):
-        tpl = {'HeatTemplateFormatVersion': '2012-12-12',
-               'Resources':
-               {'A': {'Type': 'GenericResourceType'}}}
-        self.stack = stack.Stack(self.ctx, 'test_stack',
-                                 template.Template(tpl),
-                                 status_reason='blarg',
-                                 parent_resource='parent')
-
-        parent_resource = mock.Mock()
-        parent_resource.stack = None
-        self.stack._parent_stack = dict(parent=parent_resource)
-        self.assertEqual(self.stack, self.stack.root_stack)
-
-    def test_root_stack_with_parent(self):
-        tpl = {'HeatTemplateFormatVersion': '2012-12-12',
-               'Resources':
-               {'A': {'Type': 'GenericResourceType'}}}
-        stk = stack.Stack(self.ctx, 'test_stack', template.Template(tpl),
-                          status_reason='blarg', parent_resource='parent')
-
-        parent_resource = mock.Mock()
-        parent_resource.stack.root_stack = 'test value'
-        stk._parent_stack = dict(parent=parent_resource)
-        self.assertEqual('test value', stk.root_stack)
 
     def test_load_parent_resource(self):
         self.stack = stack.Stack(self.ctx, 'load_parent_resource', self.tmpl,
